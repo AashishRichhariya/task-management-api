@@ -16,6 +16,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  app:
+    build: .
+    container_name: taskapi-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=taskdb
 
 volumes:
   postgres_data:
