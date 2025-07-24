@@ -13,6 +13,19 @@ const (
 	StatusClosed     TaskStatus = "closed"
 )
 
+func (s TaskStatus) IsValid() bool {
+	switch s {
+	case StatusPending, StatusInProgress, StatusCompleted, StatusClosed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TaskStatus) String() string {
+	return string(s)
+}
+
 type Task struct {
 	ID          int        `json:"id" db:"id"`
 	Title       string     `json:"title" db:"title"`
