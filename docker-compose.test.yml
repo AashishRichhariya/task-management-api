@@ -1,0 +1,49 @@
+services:
+  postgres-test:
+    image: postgres:15
+    container_name: taskapi-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: taskdb_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  test-runner:
+    image: golang:alpine
+    container_name: taskapi-test-runner
+    working_dir: /app
+    volumes:
+      - .:/app
+      - go_mod_cache:/go/pkg/mod # ← Cache Go modules
+      - go_build_cache:/root/.cache/go-build # ← Cache build artifacts
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=taskdb_test
+    command: sh -c "go mod download && go test ./internal/repository -v"
+    networks:
+      - test-network
+
+volumes:
+  test_postgres_data:
+  go_mod_cache: # ← Persists Go modules between runs
+  go_build_cache: # ← Persists build cache between runs
+
+networks:
+  test-network:
+    driver: bridge

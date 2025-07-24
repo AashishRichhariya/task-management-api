@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq" // PostgreSQL driver registration
 )
 
-func NewConnection() (*sql.DB, error) {
+func NewPostgresConnection() (*sql.DB, error) {
 	// Get connection details from environment variables
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
