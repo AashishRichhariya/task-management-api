@@ -94,20 +94,58 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	})
 }
 
-// GET /tasks
+// GET /tasks?page=1&limit=10&status=completed
 func (h *TaskHandler) GetAllTasks(c *gin.Context) {
-	tasks, err := h.taskService.GetAllTasks()
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+	status := c.Query("status")          
+	sortBy := c.Query("sort_by")   
+	sortOrder := c.Query("sort_order")   
+
+	// Convert string parameters to integers
+	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Error:   "Failed to retrieve tasks",
-			Message: err.Error(),
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "Invalid page parameter",
+			Message: "Page must be a positive integer",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
-		Message: "Tasks retrieved successfully",
-		Data:    tasks,
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "Invalid limit parameter",
+			Message: "Limit must be a positive integer",
+		})
+		return
+	}
+
+	// Get paginated tasks from service
+	response, err := h.taskService.GetAllTasks(page, limit, status, sortBy, sortOrder)
+	if err != nil {
+		switch err.(type) {
+		case service.ValidationError:
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "Validation failed",
+				Message: err.Error(),
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error:   "Failed to retrieve tasks",
+				Message: err.Error(),
+			})
+		}
+		return
+	}
+
+	// Return success response with pagination metadata
+	c.IndentedJSON(http.StatusOK, SuccessResponse{
+			Message: "Tasks retrieved successfully",
+			Data: map[string]any{
+					"tasks": response.Tasks,
+					"pagination": response.Pagination,
+			},
 	})
 }
 

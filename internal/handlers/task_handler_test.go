@@ -36,10 +36,10 @@ func (m *MockTaskService) GetTaskByID(id int) (*models.Task, error) {
 	return nil, args.Error(1)
 }
 
-func (m *MockTaskService) GetAllTasks() ([]models.Task, error) {
-	args := m.Called()
-	if tasks := args.Get(0); tasks != nil {
-		return tasks.([]models.Task), args.Error(1)
+func (m *MockTaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*service.PaginatedTasksResponse, error) {
+	args := m.Called(page, limit, status, sortBy, sortOrder)
+	if response := args.Get(0); response != nil {
+		return response.(*service.PaginatedTasksResponse), args.Error(1)
 	}
 	return nil, args.Error(1)
 }

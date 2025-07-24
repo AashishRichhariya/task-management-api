@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/AashishRichhariya/task-management-api/internal/models"
@@ -65,8 +66,66 @@ func (s *TaskService) GetTaskByID(id int) (*models.Task, error) {
 	return task, nil
 }
 
-func (s *TaskService) GetAllTasks() ([]models.Task, error) {
-	return s.taskRepo.GetAllTasks()
+func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*PaginatedTasksResponse, error) {
+	// Validate and set defaults
+	if page < 1 {
+		page = 1
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	
+	// Validate status if provided
+	if status != "" {
+		taskStatus := models.TaskStatus(status)
+		if !taskStatus.IsValid() {
+			return nil, ValidationError{
+				Field:   "status",
+				Message: "invalid status value",
+			}
+		}
+	}
+	
+	validSortFields := map[string]bool{
+		"id":         true,
+		"title":      true,
+		"status":     true,
+		"created_at": true,
+		"updated_at": true,
+	}
+	
+	if sortBy != "" && !validSortFields[sortBy] {
+		return nil, ValidationError{
+			Field:   "sort_by",
+			Message: "invalid sort field",
+		}
+	}
+
+	// Get tasks from repository
+	tasks, totalCount, err := s.taskRepo.GetAllTasks(limit, page, status, sortBy, sortOrder)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tasks: %w", err)
+	}
+
+	// Calculate pagination metadata
+	totalPages := (totalCount + limit - 1) / limit 
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	pagination := PaginationMeta{
+		Page:    page,
+		Limit:   limit,
+		Total:   totalCount,
+		Pages:   totalPages,
+		HasNext: page < totalPages,
+		HasPrev: page > 1,
+	}
+
+	return &PaginatedTasksResponse{
+		Tasks:      tasks,
+		Pagination: pagination,
+	}, nil
 }
 
 func (s *TaskService) UpdateTask(id int, title, description, status string) (*models.Task, error) {

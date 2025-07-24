@@ -9,9 +9,23 @@ import (
 type TaskServiceInterface interface {
 	CreateTask(title, description, status string) (*models.Task, error)
 	GetTaskByID(id int) (*models.Task, error)
-	GetAllTasks() ([]models.Task, error)
+	GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*PaginatedTasksResponse, error)
 	UpdateTask(id int, title, description, status string) (*models.Task, error)
 	DeleteTask(id int) error
+}
+
+type PaginationMeta struct {
+	Page      int  `json:"page"`
+	Limit     int  `json:"limit"`
+	Total     int  `json:"total"`
+	Pages     int  `json:"pages"`
+	HasNext   bool `json:"has_next"`
+	HasPrev   bool `json:"has_prev"`
+}
+
+type PaginatedTasksResponse struct {
+	Tasks      []models.Task   `json:"tasks"`
+	Pagination PaginationMeta `json:"pagination"`
 }
 
 type TaskNotFoundError struct {

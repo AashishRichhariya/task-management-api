@@ -168,12 +168,12 @@ func TestTaskService_GetAllTasks(t *testing.T) {
 	service.CreateTask("Task 3", "", "in_progress")
 	
 	// Get all tasks
-	tasks, err := service.GetAllTasks()
+	response, err := service.GetAllTasks(1, 10, "", "", "")
 	if err != nil {
 		t.Fatalf("GetAllTasks failed: %v", err)
 	}
-	
-	if len(tasks) != 3 {
-		t.Errorf("Expected 3 tasks, got %d", len(tasks))
+
+	if len(response.Tasks) != 3 {
+		t.Errorf("Expected 3 tasks, got %d", len(response.Tasks))
 	}
 }

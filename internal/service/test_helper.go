@@ -50,12 +50,42 @@ func (m *mockTaskRepository) GetTaskByID(id int) (*models.Task, error) {
 	return &taskCopy, nil
 }
 
-func (m *mockTaskRepository) GetAllTasks() ([]models.Task, error) {
-	var tasks []models.Task
+func (m *mockTaskRepository) GetAllTasks(limit, page int, status, sortBy, sortOrder string) ([]models.Task, int, error) {
+	// Apply filtering first
+	var filteredTasks []*models.Task
 	for _, task := range m.tasks {
+		if status == "" || string(task.Status) == status {
+			filteredTasks = append(filteredTasks, task)
+		}
+	}
+	
+	// Convert to slice for return
+	var tasks []models.Task
+	for _, task := range filteredTasks {
 		tasks = append(tasks, *task)
 	}
-	return tasks, nil
+	
+	totalCount := len(tasks)
+	
+	// Apply pagination (simple implementation for testing)
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	
+	start := (page - 1) * limit
+	end := start + limit
+	
+	if start >= len(tasks) {
+		return []models.Task{}, totalCount, nil
+	}
+	if end > len(tasks) {
+		end = len(tasks)
+	}
+	
+	return tasks[start:end], totalCount, nil
 }
 
 func (m *mockTaskRepository) UpdateTask(task *models.Task) error {

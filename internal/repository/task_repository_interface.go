@@ -8,7 +8,7 @@ type TaskRepository interface {
 	
 	// Read operations  
 	GetTaskByID(id int) (*models.Task, error)
-	GetAllTasks() ([]models.Task, error)
+	GetAllTasks(limit, page int, status, sortBy, sortOrder string) ([]models.Task, int, error)
 	
 	// Update operations
 	UpdateTask(task *models.Task) error

@@ -135,9 +135,13 @@ func TestPostgresTaskRepository_GetAllTasks(t *testing.T) {
 	}
 	
 	// Execute
-	allTasks, err := repo.GetAllTasks()
+	allTasks, totalCount, err := repo.GetAllTasks(10, 1, "", "created_at", "desc")
 	
 	// Assert
+	if totalCount != 3 {
+		t.Errorf("Expected total count 3, got %d", totalCount)
+	}
+
 	if err != nil {
 		t.Fatalf("GetAllTasks failed: %v", err)
 	}
