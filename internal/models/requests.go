@@ -15,8 +15,8 @@ type UpdateTaskRequest struct {
 
 // Query parameters
 type TaskQueryParams struct {
-	Page      int    `form:"page" binding:"min=1"`
-	Limit     int    `form:"limit" binding:"min=1,max=100"`
+	Page      int    `form:"page"`
+	Limit     int    `form:"limit"`
 	Status    string `form:"status" binding:"omitempty,oneof=pending in_progress completed closed"`
 	SortBy    string `form:"sort_by" binding:"omitempty,oneof=id title status created_at updated_at"`
 	SortOrder string `form:"sort_order" binding:"omitempty,oneof=asc desc"`

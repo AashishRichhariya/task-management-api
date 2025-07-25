@@ -19,24 +19,6 @@ func NewTaskService(taskRepo repository.TaskRepository) TaskServiceInterface {
 }
 
 func (s *TaskService) CreateTask(title, description, status string) (*models.Task, error) {
-	// Business validation
-	if err := s.validateTitle(title); err != nil {
-		return nil, err
-	}
-	
-	if err := s.validateDescription(description); err != nil {
-		return nil, err
-	}
-	
-	if err := s.validateStatus(status); err != nil {
-		return nil, err
-	}
-	
-	// Set default status if empty
-	if status == "" {
-		status = string(models.StatusPending)
-	}
-	
 	// Create task model
 	task := &models.Task{
 		Title:       strings.TrimSpace(title),
@@ -67,40 +49,6 @@ func (s *TaskService) GetTaskByID(id int) (*models.Task, error) {
 }
 
 func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*models.PaginatedTasksResponse, error) {
-	// Validate and set defaults
-	if page < 1 {
-		page = 1
-	}
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
-	
-	// Validate status if provided
-	if status != "" {
-		taskStatus := models.TaskStatus(status)
-		if !taskStatus.IsValid() {
-			return nil, ValidationError{
-				Field:   "status",
-				Message: "invalid status value",
-			}
-		}
-	}
-	
-	validSortFields := map[string]bool{
-		"id":         true,
-		"title":      true,
-		"status":     true,
-		"created_at": true,
-		"updated_at": true,
-	}
-	
-	if sortBy != "" && !validSortFields[sortBy] {
-		return nil, ValidationError{
-			Field:   "sort_by",
-			Message: "invalid sort field",
-		}
-	}
-
 	// Get tasks from repository
 	tasks, totalCount, err := s.taskRepo.GetAllTasks(limit, page, status, sortBy, sortOrder)
 	if err != nil {
@@ -134,26 +82,14 @@ func (s *TaskService) UpdateTask(id int, title, description, status string) (*mo
 	if err != nil {
 		return nil, err
 	}
-	
-	// Validate new values if provided
+
 	if title != "" {
-		if err := s.validateTitle(title); err != nil {
-			return nil, err
-		}
 		existingTask.Title = strings.TrimSpace(title)
 	}
-	
 	if description != "" {
-		if err := s.validateDescription(description); err != nil {
-			return nil, err
-		}
-		existingTask.Description = strings.TrimSpace(description)
+		existingTask.Description = strings.TrimSpace(description)  
 	}
-	
 	if status != "" {
-		if err := s.validateStatus(status); err != nil {
-			return nil, err
-		}
 		existingTask.Status = models.TaskStatus(status)
 	}
 	

@@ -5,6 +5,7 @@ import (
 
 	"github.com/AashishRichhariya/task-management-api/internal/database"
 	"github.com/AashishRichhariya/task-management-api/internal/handlers"
+	"github.com/AashishRichhariya/task-management-api/internal/middleware"
 	"github.com/AashishRichhariya/task-management-api/internal/repository"
 	"github.com/AashishRichhariya/task-management-api/internal/service"
 	"github.com/AashishRichhariya/task-management-api/internal/utils"
@@ -44,13 +45,15 @@ func setupRoutes(taskHandler handlers.TaskHandlerInterface) *gin.Engine {
 		// Task routes
 		tasks := v1.Group("/tasks")
 		{
-			tasks.POST("", taskHandler.CreateTask)   
-			tasks.GET("/:id", taskHandler.GetTask)          
-			tasks.GET("", taskHandler.GetAllTasks)        
-			tasks.PUT("/:id", taskHandler.UpdateTask)    
-			tasks.DELETE("/:id", taskHandler.DeleteTask)  
+			tasks.POST("", append(middleware.ValidateCreateTaskBody(), taskHandler.CreateTask)...)   
+			tasks.GET("/:id", append(middleware.ValidateTaskID(), taskHandler.GetTask)...)          
+			tasks.GET("", append(middleware.ValidateTaskQuery(), taskHandler.GetAllTasks)...)        
+			tasks.PUT("/:id", append(
+				append(middleware.ValidateTaskID(), middleware.ValidateUpdateTaskBody()...), 
+					taskHandler.UpdateTask,
+				)...)
+			tasks.DELETE("/:id", append(middleware.ValidateTaskID(), taskHandler.DeleteTask)...)  
 		}
-	}
-	
+	}	
 	return router
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AashishRichhariya/task-management-api/internal/middleware"
 	"github.com/AashishRichhariya/task-management-api/internal/models"
 	"github.com/AashishRichhariya/task-management-api/internal/service"
 	"github.com/gin-gonic/gin"
@@ -81,7 +82,7 @@ func TestCreateTask_Success(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.POST("/tasks", handler.CreateTask)
+	router.POST("/tasks", append(middleware.ValidateCreateTaskBody(), handler.CreateTask)...)
 	
 	req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -102,10 +103,6 @@ func TestCreateTask_ValidationError(t *testing.T) {
 	mockService := new(MockTaskService)
 	handler := NewTaskHandler(mockService)
 	
-	mockService.On("CreateTask", "Test Task", "", "invalid").Return(nil, service.ValidationError{
-		Field: "status", Message: "invalid status",
-	})
-	
 	requestBody := models.CreateTaskRequest{
 		Title:  "Test Task",
 		Status: "invalid",
@@ -114,7 +111,7 @@ func TestCreateTask_ValidationError(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.POST("/tasks", handler.CreateTask)
+	router.POST("/tasks", append(middleware.ValidateCreateTaskBody(), handler.CreateTask)...)
 	
 	req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -122,7 +119,6 @@ func TestCreateTask_ValidationError(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 	
 	assert.Equal(t, http.StatusBadRequest, recorder.Code)
-	mockService.AssertExpectations(t)
 }
 
 func TestGetTask_Success(t *testing.T) {
@@ -134,7 +130,7 @@ func TestGetTask_Success(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/tasks/:id", handler.GetTask)
+	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/1", nil)
 	recorder := httptest.NewRecorder()
@@ -157,7 +153,7 @@ func TestGetTask_NotFound(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/tasks/:id", handler.GetTask)
+	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/999", nil)
 	recorder := httptest.NewRecorder()
@@ -179,7 +175,7 @@ func TestGetTask_InvalidID(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/tasks/:id", handler.GetTask)
+	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/abc", nil)
 	recorder := httptest.NewRecorder()
@@ -190,7 +186,7 @@ func TestGetTask_InvalidID(t *testing.T) {
 	var errorResponse models.ErrorResponse
 	err := json.Unmarshal(recorder.Body.Bytes(), &errorResponse)
 	assert.NoError(t, err)
-	assert.Contains(t, errorResponse.Error, "Invalid task ID")
+	assert.Contains(t, errorResponse.Error, "Invalid ID parameter")
 }
 
 func TestGetAllTasks_Success(t *testing.T) {
@@ -214,11 +210,11 @@ func TestGetAllTasks_Success(t *testing.T) {
 		},
 	}
 	
-	mockService.On("GetAllTasks", 1, 10, "", "id", "asc").Return(paginatedResponse, nil)
+	mockService.On("GetAllTasks", 1, 10, "", "created_at", "desc").Return(paginatedResponse, nil)
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/tasks", handler.GetAllTasks)
+	router.GET("/tasks", append(middleware.ValidateTaskQuery(), handler.GetAllTasks)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks", nil)
 	recorder := httptest.NewRecorder()

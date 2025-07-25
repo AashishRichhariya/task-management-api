@@ -66,26 +66,12 @@ func (r *PostgresTaskRepository) GetTaskByID(id int) (*models.Task, error) {
 
 // Retrieves all tasks
 func (r *PostgresTaskRepository) GetAllTasks(limit, page int, status, sortBy, sortOrder string) ([]models.Task, int, error) {
-	// Validate and set defaults
-	if limit <= 0 || limit > 100 {
-		limit = 10
-	}
-	if page < 1 {
-		page = 1
-	}
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-	if sortOrder == "" || (sortOrder != "asc" && sortOrder != "desc") {
-		sortOrder = "desc"
-	}
-
 	// Convert page to offset for database
 	offset := (page - 1) * limit
 
 	// Build the WHERE clause for filtering
 	whereClause := ""
-	args := []interface{}{limit, offset}  // $1 = limit, $2 = offset
+	args := []any{limit, offset}  // $1 = limit, $2 = offset
 	argIndex := 3
 
 	if status != "" {

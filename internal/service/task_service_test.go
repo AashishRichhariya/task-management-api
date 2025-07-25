@@ -25,48 +25,6 @@ func TestTaskService_CreateTask(t *testing.T) {
 	}
 }
 
-func TestTaskService_CreateTask_ValidationError(t *testing.T) {
-	mockRepo := newMockTaskRepository()
-	service := NewTaskService(mockRepo)
-	
-	// Test empty title
-	_, err := service.CreateTask("", "Description", "pending")
-	if err == nil {
-		t.Error("Expected validation error for empty title")
-	}
-	
-	// Check it's a ValidationError
-	if _, ok := err.(ValidationError); !ok {
-		t.Errorf("Expected ValidationError, got %T", err)
-	}
-}
-
-func TestTaskService_CreateTask_InvalidStatus(t *testing.T) {
-	mockRepo := newMockTaskRepository()
-	service := NewTaskService(mockRepo)
-	
-	// Test invalid status
-	_, err := service.CreateTask("Title", "Description", "invalid_status")
-	if err == nil {
-		t.Error("Expected validation error for invalid status")
-	}
-}
-
-func TestTaskService_CreateTask_DefaultStatus(t *testing.T) {
-	mockRepo := newMockTaskRepository()
-	service := NewTaskService(mockRepo)
-	
-	// Test default status
-	task, err := service.CreateTask("Title", "Description", "")
-	if err != nil {
-		t.Fatalf("CreateTask failed: %v", err)
-	}
-	
-	if task.Status != "pending" {
-		t.Errorf("Expected default status 'pending', got %s", task.Status)
-	}
-}
-
 func TestTaskService_GetTaskByID(t *testing.T) {
 	mockRepo := newMockTaskRepository()
 	service := NewTaskService(mockRepo)
