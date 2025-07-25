@@ -66,7 +66,7 @@ func (s *TaskService) GetTaskByID(id int) (*models.Task, error) {
 	return task, nil
 }
 
-func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*PaginatedTasksResponse, error) {
+func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*models.PaginatedTasksResponse, error) {
 	// Validate and set defaults
 	if page < 1 {
 		page = 1
@@ -113,7 +113,8 @@ func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder str
 		totalPages = 1
 	}
 
-	pagination := PaginationMeta{
+
+	pagination := models.PaginationMeta{
 		Page:    page,
 		Limit:   limit,
 		Total:   totalCount,
@@ -122,7 +123,7 @@ func (s *TaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder str
 		HasPrev: page > 1,
 	}
 
-	return &PaginatedTasksResponse{
+	return &models.PaginatedTasksResponse{
 		Tasks:      tasks,
 		Pagination: pagination,
 	}, nil

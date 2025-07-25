@@ -13,6 +13,15 @@ type TaskHandler struct {
 	taskService service.TaskServiceInterface
 }
 
+type TaskHandlerInterface interface {
+	CreateTask(c *gin.Context)
+	GetTask(c *gin.Context)
+	GetAllTasks(c *gin.Context)
+	UpdateTask(c *gin.Context)
+	DeleteTask(c *gin.Context)
+}
+
+
 func NewTaskHandler(taskService service.TaskServiceInterface) TaskHandlerInterface {
 	return &TaskHandler{
 		taskService: taskService,
@@ -21,10 +30,10 @@ func NewTaskHandler(taskService service.TaskServiceInterface) TaskHandlerInterfa
 
 // POST /tasks
 func (h *TaskHandler) CreateTask(c *gin.Context) {
-	var req CreateTaskRequest
+	var req models.CreateTaskRequest
 	
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid request body",
 			Message: err.Error(),
 		})
@@ -39,12 +48,12 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case service.ValidationError:
-			c.JSON(http.StatusBadRequest, ErrorResponse{
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Error:   "Validation failed",
 				Message: err.Error(),
 			})
 		default:
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Error:   "Failed to create task",
 				Message: err.Error(),
 			})
@@ -52,7 +61,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, SuccessResponse{
+	c.JSON(http.StatusCreated, models.SuccessResponse{
 		Message: "Task created successfully",
 		Data:    task,
 	})
@@ -64,7 +73,7 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid task ID",
 			Message: "Task ID must be a valid integer",
 		})
@@ -75,12 +84,12 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case service.TaskNotFoundError:
-			c.JSON(http.StatusNotFound, ErrorResponse{
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
 				Error:   "Task not found", 
 				Message: err.Error(),
 			})
 		default:
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Error:   "Failed to retrieve task",
 				Message: err.Error(),
 			})
@@ -88,7 +97,7 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
+	c.JSON(http.StatusOK, models.TaskResponse{
 		Message: "Task retrieved successfully",
 		Data:    task,
 	})
@@ -105,7 +114,7 @@ func (h *TaskHandler) GetAllTasks(c *gin.Context) {
 	// Convert string parameters to integers
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid page parameter",
 			Message: "Page must be a positive integer",
 		})
@@ -114,7 +123,7 @@ func (h *TaskHandler) GetAllTasks(c *gin.Context) {
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid limit parameter",
 			Message: "Limit must be a positive integer",
 		})
@@ -126,12 +135,12 @@ func (h *TaskHandler) GetAllTasks(c *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case service.ValidationError:
-			c.JSON(http.StatusBadRequest, ErrorResponse{
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Error:   "Validation failed",
 				Message: err.Error(),
 			})
 		default:
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Error:   "Failed to retrieve tasks",
 				Message: err.Error(),
 			})
@@ -140,13 +149,10 @@ func (h *TaskHandler) GetAllTasks(c *gin.Context) {
 	}
 
 	// Return success response with pagination metadata
-	c.IndentedJSON(http.StatusOK, SuccessResponse{
-			Message: "Tasks retrieved successfully",
-			Data: map[string]any{
-					"tasks": response.Tasks,
-					"pagination": response.Pagination,
-			},
-	})
+	c.IndentedJSON(http.StatusOK, models.TasksResponse{
+    Message: "Tasks retrieved successfully", 
+    Data: response, 
+})
 }
 
 // PUT /tasks/:id
@@ -154,17 +160,17 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid task ID",
 			Message: "Task ID must be a valid integer",
 		})
 		return
 	}
 
-	var req UpdateTaskRequest
+	var req models.UpdateTaskRequest
 	
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid request body",
 			Message: err.Error(),
 		})
@@ -175,17 +181,17 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case service.TaskNotFoundError:
-			c.JSON(http.StatusNotFound, ErrorResponse{
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
 				Error:   "Task not found",
 				Message: err.Error(),
 			})
 		case service.ValidationError:
-			c.JSON(http.StatusBadRequest, ErrorResponse{
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
 				Error:   "Validation failed",
 				Message: err.Error(),
 			})
 		default:
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Error:   "Failed to update task",
 				Message: err.Error(),
 			})
@@ -193,7 +199,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
+	c.JSON(http.StatusOK, models.SuccessResponse{
 		Message: "Task updated successfully",
 		Data:    task,
 	})
@@ -204,7 +210,7 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Error:   "Invalid task ID",
 			Message: "Task ID must be a valid integer",
 		})
@@ -215,12 +221,12 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	if err != nil {
 		switch err.(type) {
 		case service.TaskNotFoundError:
-			c.JSON(http.StatusNotFound, ErrorResponse{
+			c.JSON(http.StatusNotFound, models.ErrorResponse{
 				Error:   "Task not found",
 				Message: err.Error(),
 			})
 		default:
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Error:   "Failed to delete task",
 				Message: err.Error(),
 			})
@@ -228,7 +234,7 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, SuccessResponse{
+	c.JSON(http.StatusOK, models.SuccessResponse{
 		Message: "Task deleted successfully",
 	})
 }

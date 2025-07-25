@@ -35,6 +35,10 @@ test-repository-fresh:
 test-repository-quick:
 	docker-compose -f docker-compose.test.yml run --rm test-runner
 
+test-unit:
+	make test-service
+	make test-handlers
+
 test-all:
 	make test-service
 	make test-repository

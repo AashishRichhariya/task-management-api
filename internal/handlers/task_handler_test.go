@@ -36,10 +36,10 @@ func (m *MockTaskService) GetTaskByID(id int) (*models.Task, error) {
 	return nil, args.Error(1)
 }
 
-func (m *MockTaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*service.PaginatedTasksResponse, error) {
+func (m *MockTaskService) GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*models.PaginatedTasksResponse, error) {
 	args := m.Called(page, limit, status, sortBy, sortOrder)
 	if response := args.Get(0); response != nil {
-		return response.(*service.PaginatedTasksResponse), args.Error(1)
+		return response.(*models.PaginatedTasksResponse), args.Error(1)
 	}
 	return nil, args.Error(1)
 }
@@ -72,7 +72,7 @@ func TestCreateTask_Success(t *testing.T) {
 	
 	mockService.On("CreateTask", "Test Task", "Test Description", "pending").Return(task, nil)
 	
-	requestBody := CreateTaskRequest{
+	requestBody := models.CreateTaskRequest{
 		Title:       "Test Task",
 		Description: "Test Description",
 		Status:      "pending",
@@ -89,6 +89,12 @@ func TestCreateTask_Success(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 	
 	assert.Equal(t, http.StatusCreated, recorder.Code)
+
+	var response models.SuccessResponse
+	err := json.Unmarshal(recorder.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Task created successfully", response.Message)
+
 	mockService.AssertExpectations(t)
 }
 
@@ -100,7 +106,7 @@ func TestCreateTask_ValidationError(t *testing.T) {
 		Field: "status", Message: "invalid status",
 	})
 	
-	requestBody := CreateTaskRequest{
+	requestBody := models.CreateTaskRequest{
 		Title:  "Test Task",
 		Status: "invalid",
 	}
@@ -135,6 +141,11 @@ func TestGetTask_Success(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 	
 	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	var response models.SuccessResponse
+	err := json.Unmarshal(recorder.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Task retrieved successfully", response.Message)
 	mockService.AssertExpectations(t)
 }
 
@@ -153,5 +164,72 @@ func TestGetTask_NotFound(t *testing.T) {
 	router.ServeHTTP(recorder, req)
 	
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
+
+	// Verify error response structure
+	var errorResponse models.ErrorResponse
+	err := json.Unmarshal(recorder.Body.Bytes(), &errorResponse)
+	assert.NoError(t, err)
+	assert.Equal(t, "Task not found", errorResponse.Error)
+	mockService.AssertExpectations(t)
+}
+
+func TestGetTask_InvalidID(t *testing.T) {
+	mockService := new(MockTaskService)
+	handler := NewTaskHandler(mockService)
+	
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/tasks/:id", handler.GetTask)
+	
+	req, _ := http.NewRequest("GET", "/tasks/abc", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+	
+	var errorResponse models.ErrorResponse
+	err := json.Unmarshal(recorder.Body.Bytes(), &errorResponse)
+	assert.NoError(t, err)
+	assert.Contains(t, errorResponse.Error, "Invalid task ID")
+}
+
+func TestGetAllTasks_Success(t *testing.T) {
+	mockService := new(MockTaskService)
+	handler := NewTaskHandler(mockService)
+	
+	tasks := []models.Task{
+		{ID: 1, Title: "Task 1", Status: models.StatusPending},
+		{ID: 2, Title: "Task 2", Status: models.StatusCompleted},
+	}
+	
+	paginatedResponse := &models.PaginatedTasksResponse{
+		Tasks: tasks,
+		Pagination: models.PaginationMeta{
+			Page:    1,
+			Limit:   10,
+			Total:   2,
+			Pages:   1,
+			HasNext: false,
+			HasPrev: false,
+		},
+	}
+	
+	mockService.On("GetAllTasks", 1, 10, "", "id", "asc").Return(paginatedResponse, nil)
+	
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/tasks", handler.GetAllTasks)
+	
+	req, _ := http.NewRequest("GET", "/tasks", nil)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+	
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	
+	var response models.SuccessResponse
+	err := json.Unmarshal(recorder.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Tasks retrieved successfully", response.Message)
+	
 	mockService.AssertExpectations(t)
 }
