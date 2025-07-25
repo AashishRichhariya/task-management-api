@@ -3,18 +3,18 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
+	"github.com/AashishRichhariya/task-management-api/internal/utils"
 	_ "github.com/lib/pq" // PostgreSQL driver registration
 )
 
 func NewPostgresConnection() (*sql.DB, error) {
 	// Get connection details from environment variables
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "password")
-	dbname := getEnv("DB_NAME", "taskdb")
+	host := utils.GetEnv("DB_HOST", "localhost")
+	port := utils.GetEnv("DB_PORT", "5432")
+	user := utils.GetEnv("DB_USER", "postgres")
+	password := utils.GetEnv("DB_PASSWORD", "password")
+	dbname := utils.GetEnv("DB_NAME", "taskdb")
 	
 	// Build connection string
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -32,11 +32,4 @@ func NewPostgresConnection() (*sql.DB, error) {
 	}
 	
 	return db, nil
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

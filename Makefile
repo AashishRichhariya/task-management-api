@@ -5,6 +5,18 @@ dev:
 dev-bg:
 	docker-compose up -d --build
 
+# Horizontal Scaling
+INSTANCES ?= 3
+
+dev-scale:
+	docker-compose up --build --scale app=$(INSTANCES)
+
+dev-scale-bg:
+	docker-compose up -d --build --scale app=$(INSTANCES)
+
+test-load:
+	@for i in {1..10}; do curl -s http://localhost/health | grep instance; done
+
 # Testing commands
 test-service:
 	docker-compose run --rm test go test -v ./internal/service/

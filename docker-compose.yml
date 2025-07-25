@@ -3,9 +3,9 @@ services:
     image: postgres:15
     container_name: taskapi-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: taskdb
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
@@ -18,34 +18,32 @@ services:
       retries: 5
   app:
     build: .
-    container_name: taskapi-app
-    ports:
-      - "8080:8080"
+    env_file: .env
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=taskdb
+
+  nginx:
+    image: nginx:alpine
+    container_name: taskapi-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+
   test:
     build:
       context: .
       target: builder
+    env_file: .env
     volumes:
       - .:/app
     working_dir: /app
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=taskdb
 
 volumes:
   postgres_data:

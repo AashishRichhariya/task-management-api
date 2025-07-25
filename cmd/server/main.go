@@ -7,6 +7,7 @@ import (
 	"github.com/AashishRichhariya/task-management-api/internal/handlers"
 	"github.com/AashishRichhariya/task-management-api/internal/repository"
 	"github.com/AashishRichhariya/task-management-api/internal/service"
+	"github.com/AashishRichhariya/task-management-api/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,9 +27,9 @@ func main() {
 	// Router setup
 	router := setupRoutes(taskHandler)
 
-
-	log.Println("Starting server on :8080")
-	router.Run(":8080")
+	port := utils.GetEnv("APP_PORT", "8080")
+	log.Println("Starting server on :" + port)
+	router.Run(":" + port)
 }
 
 func setupRoutes(taskHandler handlers.TaskHandlerInterface) *gin.Engine {
