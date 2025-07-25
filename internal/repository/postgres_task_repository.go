@@ -13,6 +13,22 @@ type PostgresTaskRepository struct {
 	db *sql.DB
 }
 
+
+type TaskRepository interface {
+	// Create operations
+	CreateTask(task *models.Task) error
+	
+	// Read operations  
+	GetTaskByID(id int) (*models.Task, error)
+	GetAllTasks(limit, page int, status, sortBy, sortOrder string) ([]models.Task, int, error)
+	
+	// Update operations
+	UpdateTask(task *models.Task) error
+	
+	// Delete operations
+	DeleteTask(id int) error
+}
+
 // Constructor - creates new repository instance
 func NewPostgresTaskRepository(db *sql.DB) TaskRepository {
 	return &PostgresTaskRepository{db: db}

@@ -12,6 +12,15 @@ type TaskService struct {
 	taskRepo repository.TaskRepository
 }
 
+type TaskServiceInterface interface {
+	CreateTask(title, description, status string) (*models.Task, error)
+	GetTaskByID(id int) (*models.Task, error)
+	GetAllTasks(page, limit int, status, sortBy, sortOrder string) (*models.PaginatedTasksResponse, error)
+	UpdateTask(id int, title, description, status string) (*models.Task, error)
+	DeleteTask(id int) error
+}
+
+
 func NewTaskService(taskRepo repository.TaskRepository) TaskServiceInterface {
 	return &TaskService{
 		taskRepo: taskRepo,
@@ -42,7 +51,7 @@ func (s *TaskService) GetTaskByID(id int) (*models.Task, error) {
 	}
 	
 	if task == nil {
-		return nil, TaskNotFoundError{ID: id}
+		return nil, models.TaskNotFoundError{ID: id}
 	}
 	
 	return task, nil

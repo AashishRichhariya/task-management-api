@@ -35,6 +35,10 @@ func main() {
 
 func setupRoutes(taskHandler handlers.TaskHandlerInterface) *gin.Engine {
 	router := gin.Default()
+
+	// error handling middleware
+	router.Use(middleware.RecoveryMiddleware())
+	router.Use(middleware.ErrorMiddleware())
 	
 	// Health check endpoint
 	router.GET("/health", handlers.HealthCheck)

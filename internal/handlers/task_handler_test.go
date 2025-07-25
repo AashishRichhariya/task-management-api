@@ -10,7 +10,6 @@ import (
 
 	"github.com/AashishRichhariya/task-management-api/internal/middleware"
 	"github.com/AashishRichhariya/task-management-api/internal/models"
-	"github.com/AashishRichhariya/task-management-api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -82,6 +81,7 @@ func TestCreateTask_Success(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.POST("/tasks", append(middleware.ValidateCreateTaskBody(), handler.CreateTask)...)
 	
 	req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonBody))
@@ -111,6 +111,7 @@ func TestCreateTask_ValidationError(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.POST("/tasks", append(middleware.ValidateCreateTaskBody(), handler.CreateTask)...)
 	
 	req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonBody))
@@ -130,6 +131,7 @@ func TestGetTask_Success(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/1", nil)
@@ -149,10 +151,11 @@ func TestGetTask_NotFound(t *testing.T) {
 	mockService := new(MockTaskService)
 	handler := NewTaskHandler(mockService)
 	
-	mockService.On("GetTaskByID", 999).Return(nil, service.TaskNotFoundError{ID: 999})
+	mockService.On("GetTaskByID", 999).Return(nil,  models.TaskNotFoundError{ID: 999})
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/999", nil)
@@ -175,6 +178,7 @@ func TestGetTask_InvalidID(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.GET("/tasks/:id", append(middleware.ValidateTaskID(), handler.GetTask)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks/abc", nil)
@@ -214,6 +218,7 @@ func TestGetAllTasks_Success(t *testing.T) {
 	
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(middleware.ErrorMiddleware())
 	router.GET("/tasks", append(middleware.ValidateTaskQuery(), handler.GetAllTasks)...)
 	
 	req, _ := http.NewRequest("GET", "/tasks", nil)

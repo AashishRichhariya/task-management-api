@@ -2,6 +2,8 @@ package service
 
 import (
 	"testing"
+
+	"github.com/AashishRichhariya/task-management-api/internal/models"
 )
 
 // Test functions
@@ -54,7 +56,7 @@ func TestTaskService_GetTaskByID_NotFound(t *testing.T) {
 	}
 	
 	// Check it's a TaskNotFoundError
-	if _, ok := err.(TaskNotFoundError); !ok {
+	if _, ok := err.(models.TaskNotFoundError); !ok {
 		t.Errorf("Expected TaskNotFoundError, got %T", err)
 	}
 }
@@ -111,7 +113,7 @@ func TestTaskService_DeleteTask_NotFound(t *testing.T) {
 		t.Error("Expected TaskNotFoundError")
 	}
 	
-	if _, ok := err.(TaskNotFoundError); !ok {
+	if _, ok := err.(models.TaskNotFoundError); !ok {
 		t.Errorf("Expected TaskNotFoundError, got %T", err)
 	}
 }

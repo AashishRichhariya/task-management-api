@@ -34,10 +34,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 
 	task, err := h.taskService.CreateTask(req.Title, req.Description, req.Status)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error:   "Failed to create task",
-			Message: err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
@@ -53,18 +50,7 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 
 	task, err := h.taskService.GetTaskByID(id)
 	if err != nil {
-		switch err.(type) {
-		case service.TaskNotFoundError:
-			c.IndentedJSON(http.StatusNotFound, models.ErrorResponse{
-				Error:   "Task not found", 
-				Message: err.Error(),
-			})
-		default:
-			c.IndentedJSON(http.StatusInternalServerError, models.ErrorResponse{
-				Error:   "Failed to retrieve task",
-				Message: err.Error(),
-			})
-		}
+		c.Error(err)  
 		return
 	}
 
@@ -86,10 +72,7 @@ func (h *TaskHandler) GetAllTasks(c *gin.Context) {
 		query.SortOrder,
 	)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, models.ErrorResponse{
-			Error:   "Failed to retrieve tasks",
-			Message: err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
@@ -106,18 +89,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	
 	task, err := h.taskService.UpdateTask(id, req.Title, req.Description, req.Status)
 	if err != nil {
-		switch err.(type) {
-		case service.TaskNotFoundError:
-			c.IndentedJSON(http.StatusNotFound, models.ErrorResponse{
-				Error:   "Task not found",
-				Message: err.Error(),
-			})
-		default:
-			c.IndentedJSON(http.StatusInternalServerError, models.ErrorResponse{
-				Error:   "Failed to update task",
-				Message: err.Error(),
-			})
-		}
+		c.Error(err)
 		return
 	}
 
@@ -133,18 +105,7 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	
 	err := h.taskService.DeleteTask(id)
 	if err != nil {
-		switch err.(type) {
-		case service.TaskNotFoundError:
-			c.IndentedJSON(http.StatusNotFound, models.ErrorResponse{
-				Error:   "Task not found",
-				Message: err.Error(),
-			})
-		default:
-			c.IndentedJSON(http.StatusInternalServerError, models.ErrorResponse{
-				Error:   "Failed to delete task",
-				Message: err.Error(),
-			})
-		}
+		c.Error(err)
 		return
 	}
 
