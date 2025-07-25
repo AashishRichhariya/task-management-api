@@ -313,6 +313,35 @@ Current architecture demonstrates core microservice principles:
 - **Fault Isolation**: Task service failures don't affect user service or notification service
 - **Independent Deployment**: Can deploy task service updates without affecting other services
 
+### Database Schema & Design
+
+**Task Table Structure**:
+```sql
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,                    -- Auto-incrementing unique identifier
+    title VARCHAR(255) NOT NULL,             -- Required task title (max 255 chars)
+    description TEXT,                         -- Optional detailed description
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- Task status with default
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Business rule enforcement at database level
+    CONSTRAINT valid_status CHECK (status IN ('pending', 'in_progress', 'completed', 'closed'))
+);
+
+-- Performance optimization indexes
+CREATE INDEX idx_tasks_status ON tasks(status);           -- Fast filtering by status
+CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);  -- Fast sorting by date
+```
+
+**Design Decisions**:
+- **Database Constraints**: Enforce valid status values at DB level (defense in depth)
+- **Timestamps**: Automatic audit trail for created/updated tracking
+- **Indexes**: Optimized for common query patterns (status filtering, date sorting)
+- **Text vs VARCHAR**: TEXT for descriptions (unlimited), VARCHAR for constrained fields
+
+
+
 ## Inter-Service Communication Strategy
 
 **Assignment Question**: How would two microservices (e.g., Task Service + User Service) communicate?
@@ -410,33 +439,6 @@ proxy_pass http://$upstream;
 **Advanced Resilience**:
 - **Health Checks**: Automatic removal of unhealthy instances
 - **Circuit Breakers**: Prevent cascade failures across services
-
-### Database Schema & Design
-
-**Task Table Structure**:
-```sql
-CREATE TABLE tasks (
-    id SERIAL PRIMARY KEY,                    -- Auto-incrementing unique identifier
-    title VARCHAR(255) NOT NULL,             -- Required task title (max 255 chars)
-    description TEXT,                         -- Optional detailed description
-    status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- Task status with default
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    -- Business rule enforcement at database level
-    CONSTRAINT valid_status CHECK (status IN ('pending', 'in_progress', 'completed', 'closed'))
-);
-
--- Performance optimization indexes
-CREATE INDEX idx_tasks_status ON tasks(status);           -- Fast filtering by status
-CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);  -- Fast sorting by date
-```
-
-**Design Decisions**:
-- **Database Constraints**: Enforce valid status values at DB level (defense in depth)
-- **Timestamps**: Automatic audit trail for created/updated tracking
-- **Indexes**: Optimized for common query patterns (status filtering, date sorting)
-- **Text vs VARCHAR**: TEXT for descriptions (unlimited), VARCHAR for constrained fields
 
 
 ## Testing Architecture
