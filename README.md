@@ -383,7 +383,7 @@ CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);  -- Fast sorting by
 
 **Design Decisions**:
 
-- **Database Constraints**: Enforce valid status values at DB level (defense in depth)
+- **Database Constraints**: Enforce valid status values at DB level 
 - **Timestamps**: Automatic audit trail for created/updated tracking
 - **Indexes**: Optimized for common query patterns (status filtering, date sorting)
 - **Text vs VARCHAR**: TEXT for descriptions (unlimited), VARCHAR for constrained fields
@@ -418,8 +418,8 @@ userService := queue.NewUserServiceClient(rabbitMQConn)
 | Method             | Pros                                      | Cons                             | Use Case                             |
 | ------------------ | ----------------------------------------- | -------------------------------- | ------------------------------------ |
 | **REST**           | Simple, HTTP-based, wide adoption         | Higher latency, verbose JSON     | CRUD operations, external APIs       |
-| **gRPC**           | Fast, type-safe, bi-directional streaming | Learning curve, HTTP/2 required  | Internal service communication       |
-| **Message Queues** | Async, decoupled, fault-tolerant          | Complexity, eventual consistency | Event-driven, high-volume processing |
+| **gRPC**           | Fast, type-safe, bi-directional streaming | Relatively complex               | Internal service communication       |
+| **Message Queues** | Async, decoupled, fault-tolerant          | Complexity, no strong consistency| Event-driven, high-volume processing |
 
 **Implementation in Task Service**:
 
@@ -441,7 +441,6 @@ func (s *TaskService) AssignTask(taskID, userID int) error {
 
 - **Swap communication protocols** without changing business logic
 - **Mock external services** for testing
-- **Gradual migration** from REST to gRPC as services mature
 
 ## Horizontal Scaling Demonstration
 
@@ -460,7 +459,7 @@ make test-load
 
 ```nginx
 # Dynamic service discovery using Docker DNS
-resolver 127.0.0.11 valid=10s;
+resolver 127.0.0.11 valid=0s;
 set $upstream app:8080;  # Docker service name
 proxy_pass http://$upstream;
 ```
@@ -480,8 +479,8 @@ proxy_pass http://$upstream;
 
 **Load Balancing Optimization**:
 
-- **Algorithm Selection**: Round Robin, Least Connections, or IP Hash depending on requirements
-- **Multiple Load Balancers**: Scale load balancers themselves for high availability (HA Proxy = High Availability Proxy)
+- **Algorithm Selection**: Round Robin, Least Connections, or LRU etc. depending on requirements
+- **Multiple Load Balancers**: Scale load balancers themselves for high availability
 
 **Database Scaling**:
 
@@ -566,6 +565,4 @@ This Task Management API demonstrates microservices architecture principles thro
 - Clean separation of concerns enabling independent scaling
 - Interface-based design supporting multiple communication protocols
 - Comprehensive testing strategy across all architectural layers
-- Production-ready containerization with horizontal scaling capabilities
-
-The implementation exceeds assignment requirements by providing a foundation for microservices evolution while maintaining simplicity and clarity.
+- Containerization with horizontal scaling capabilities
