@@ -27,7 +27,8 @@
 | PUT    | `/api/v1/tasks/{id}` | Update existing task            | `title`, `description`, `status`  | -                                                  |
 | DELETE | `/api/v1/tasks/{id}` | Delete task                     | -                                 | -                                                  |
 
-_Fields marked with `_` are required\*
+
+_Fields marked with `*` are required_
 
 **Valid Task Statuses**: `pending` (default), `in_progress`, `completed`, `closed`  
 **Pagination**: Default `page=1, limit=10`, max `limit=100`  
