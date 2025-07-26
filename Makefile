@@ -15,7 +15,7 @@ dev-scale-bg:
 	docker-compose up -d --build --scale app=$(INSTANCES)
 
 test-load:
-	@for i in {1..10}; do curl -s http://localhost/health | grep instance; done
+	@for i in {1..10}; do curl -s http://localhost/health; echo; done
 
 # Testing commands
 test-service:

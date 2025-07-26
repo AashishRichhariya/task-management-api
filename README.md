@@ -18,36 +18,62 @@
 
 ## API Endpoints Overview
 
-| Method | Endpoint | Description | Body | Query Params |
-|--------|----------|-------------|------|--------------|
-| GET | `/health` | Health check with instance info | - | - |
-| POST | `/api/v1/tasks` | Create new task | `title*`, `description`, `status` | - |
-| GET | `/api/v1/tasks` | Get all tasks with pagination | - | `page`, `limit`, `status`, `sort_by`, `sort_order` |
-| GET | `/api/v1/tasks/{id}` | Get specific task | - | - |
-| PUT | `/api/v1/tasks/{id}` | Update existing task | `title`, `description`, `status` | - |
-| DELETE | `/api/v1/tasks/{id}` | Delete task | - | - |
+| Method | Endpoint             | Description                     | Body                              | Query Params                                       |
+| ------ | -------------------- | ------------------------------- | --------------------------------- | -------------------------------------------------- |
+| GET    | `/health`            | Health check with instance info | -                                 | -                                                  |
+| POST   | `/api/v1/tasks`      | Create new task                 | `title*`, `description`, `status` | -                                                  |
+| GET    | `/api/v1/tasks`      | Get all tasks with pagination   | -                                 | `page`, `limit`, `status`, `sort_by`, `sort_order` |
+| GET    | `/api/v1/tasks/{id}` | Get specific task               | -                                 | -                                                  |
+| PUT    | `/api/v1/tasks/{id}` | Update existing task            | `title`, `description`, `status`  | -                                                  |
+| DELETE | `/api/v1/tasks/{id}` | Delete task                     | -                                 | -                                                  |
 
-*Fields marked with `*` are required*
+_Fields marked with `_` are required\*
 
 **Valid Task Statuses**: `pending` (default), `in_progress`, `completed`, `closed`  
 **Pagination**: Default `page=1, limit=10`, max `limit=100`  
 **Sorting**: By `id`, `title`, `status`, `created_at`, `updated_at` (asc/desc, default: `created_at desc`)
 
-
 ## Quick Start
 
 ### Option 1: Build from Source
-**Prerequisites**: Docker and Docker Compose installed and running
+
+**Prerequisites**:
+
+- Docker and Docker Compose installed and running
+- Make command available:
+  - **Linux**: Usually pre-installed
+  - **Mac**: Install with `xcode-select --install`
+  - **Windows**: Use Git Bash (comes with Git for Windows) or WSL
 
 ```bash
 git clone https://github.com/AashishRichhariya/task-management-api.git
 cd task-management-api
+```
 
+- **With Make** (Recommended)
+
+```
 # Start with default 3 instances
 make dev-scale
 
+
 # Test load balancing
 make test-load
+```
+
+- **Without Make** (Windows CMD/PowerShell)
+
+```
+# Start with 3 instances
+docker-compose up --build --scale app=3
+
+
+# Test load balancing (Windows PowerShell)
+for ($i=1; $i -le 10; $i++) { curl -s http://localhost/health; echo "" }
+
+
+# Test load balancing (Windows CMD)
+for /l %i in (1,1,10) do (curl -s http://localhost/health & echo.)
 ```
 
 **Repository**: [https://github.com/AashishRichhariya/task-management-api](https://github.com/AashishRichhariya/task-management-api)
@@ -55,6 +81,7 @@ make test-load
 ## API Testing Examples
 
 ### 1. Health Check & Load Balancing
+
 ```bash
 # Check service health
 curl http://localhost/health
@@ -64,6 +91,7 @@ make test-load
 ```
 
 ### 2. Create Tasks with Different Statuses
+
 ```bash
 # Create sample tasks
 curl -X POST http://localhost/api/v1/tasks \
@@ -85,6 +113,7 @@ curl -X POST http://localhost/api/v1/tasks \
 ```
 
 ### 3. Get All Tasks (Pagination & Filtering)
+
 ```bash
 # Get all tasks (default pagination)
 curl http://localhost/api/v1/tasks
@@ -105,6 +134,7 @@ curl "http://localhost/api/v1/tasks?status=completed&sort_by=created_at&sort_ord
 ```
 
 ### 4. Get Specific Task by ID
+
 ```bash
 # Get task by ID
 curl http://localhost/api/v1/tasks/1
@@ -114,6 +144,7 @@ curl http://localhost/api/v1/tasks/999
 ```
 
 ### 5. Update Task
+
 ```bash
 # Full update
 curl -X PUT http://localhost/api/v1/tasks/1 \
@@ -130,6 +161,7 @@ curl http://localhost/api/v1/tasks/1
 ```
 
 ### 6. Delete Task
+
 ```bash
 # Delete task
 curl -X DELETE http://localhost/api/v1/tasks/1
@@ -139,6 +171,7 @@ curl http://localhost/api/v1/tasks/1
 ```
 
 ### 7. Error Handling Examples
+
 ```bash
 # Validation error (400) - empty title
 curl -X POST http://localhost/api/v1/tasks \
@@ -154,7 +187,6 @@ curl "http://localhost/api/v1/tasks?status=invalid_status"
 # Not found error (404)
 curl http://localhost/api/v1/tasks/999
 ```
-
 
 ## Architecture Deep Dive
 
@@ -172,11 +204,12 @@ The system follows Clean Architecture principles with clear layer separation, en
 TaskHandlerInterface    TaskServiceInterface     TaskRepository
 ```
 
-*The arrows represent data flow through interfaces - each layer calls the next via interface contracts, not direct dependencies.*
+_The arrows represent data flow through interfaces - each layer calls the next via interface contracts, not direct dependencies._
 
 ### Layer Responsibilities
 
 **HTTP Layer (`internal/handlers/`)**:
+
 - Receives HTTP requests and validates routes
 - Delegates to middleware for validation
 - Calls service layer for business operations
@@ -184,6 +217,7 @@ TaskHandlerInterface    TaskServiceInterface     TaskRepository
 - **No business logic** - purely HTTP concerns
 
 **Service Layer (`internal/service/`)**:
+
 - Contains all business logic and rules
 - Orchestrates data operations via repository
 - Handles domain-specific validations (title trimming/length, valid status transitions)
@@ -191,6 +225,7 @@ TaskHandlerInterface    TaskServiceInterface     TaskRepository
 - **Technology agnostic** - no HTTP or database concerns
 
 Domain-specific validations example:
+
 ```go
 func (s *TaskService) CreateTask(title, description, status string) (*models.Task, error) {
     task := &models.Task{
@@ -203,6 +238,7 @@ func (s *TaskService) CreateTask(title, description, status string) (*models.Tas
 ```
 
 **Repository Layer (`internal/repository/`)**:
+
 - Handles all database interactions
 - Implements data persistence logic
 - Manages SQL queries and transactions
@@ -213,11 +249,12 @@ func (s *TaskService) CreateTask(title, description, status string) (*models.Tas
 Every layer communicates through interfaces, creating clear contracts and enabling flexibility:
 
 **TaskHandlerInterface** - HTTP-level operations:
+
 ```go
 type TaskHandlerInterface interface {
     CreateTask(c *gin.Context)    // Handles HTTP request/response, JSON, status codes
     GetTask(c *gin.Context)       // Deals with Gin context and HTTP concerns
-    GetAllTasks(c *gin.Context)   
+    GetAllTasks(c *gin.Context)
     UpdateTask(c *gin.Context)
     DeleteTask(c *gin.Context)
 }
@@ -228,6 +265,7 @@ func NewTaskHandler(taskService service.TaskServiceInterface) TaskHandlerInterfa
 ```
 
 **TaskServiceInterface** - Business logic operations:
+
 ```go
 type TaskServiceInterface interface {
     CreateTask(title, description, status string) (*models.Task, error)    // Pure business logic
@@ -243,6 +281,7 @@ func NewTaskService(taskRepo repository.TaskRepository) TaskServiceInterface {
 ```
 
 **TaskRepository** - Data access operations:
+
 ```go
 type TaskRepository interface {
     CreateTask(task *models.Task) error                                                    // Pure SQL operations
@@ -260,6 +299,7 @@ func NewPostgresTaskRepository(db *sql.DB) TaskRepository {
 **Benefits Achieved**:
 
 **Dependency Injection**: Each layer receives interfaces, not concrete implementations
+
 ```go
 // In main.go - easy to swap implementations
 taskRepo := repository.NewPostgresTaskRepository(db)     // Could be NewMongoTaskRepository
@@ -268,17 +308,19 @@ taskHandler := handlers.NewTaskHandler(taskService)
 ```
 
 **Testing Isolation**: Each layer can be tested with mocks
+
 ```go
 // Service tests - no database needed
 mockRepo := newMockTaskRepository()
 service := NewTaskService(mockRepo)
 
-// Handler tests - no business logic or database needed  
+// Handler tests - no business logic or database needed
 mockService := new(MockTaskService)
 handler := NewTaskHandler(mockService)
 ```
 
 **Technology Flexibility**:
+
 - Switch PostgreSQL → MySQL: Implement `TaskRepository` interface
 - Add GraphQL: Create GraphQL handlers using same `TaskServiceInterface`
 - Add gRPC: Create gRPC handlers calling existing service layer
@@ -288,6 +330,7 @@ handler := NewTaskHandler(mockService)
 Centralized middleware handles cross-cutting concerns:
 
 **Validation Middleware**: Validates and transforms requests before reaching handlers
+
 ```go
 // Clean handler - only business operations
 func (h *TaskHandler) CreateTask(c *gin.Context) {
@@ -298,15 +341,17 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 ```
 
 **Error Middleware**: Converts typed errors to appropriate HTTP responses
+
 ```go
 // Typed business errors
 return models.TaskNotFoundError{ID: id}  // → 404 JSON response
-return models.ValidationError{...}       // → 400 JSON response  
+return models.ValidationError{...}       // → 400 JSON response
 ```
 
-
 ### Microservices Enablement
+
 Current architecture demonstrates core microservice principles:
+
 - **Self-Contained Service**: Task service with dedicated database, isolated from other services
 - **Independent Scaling**: Can scale task service independently based on demand
 - **Technology Isolation**: Each microservice can use different tech stack (Go + PostgreSQL for tasks, Node.js + Redis for notifications)
@@ -316,6 +361,7 @@ Current architecture demonstrates core microservice principles:
 ### Database Schema & Design
 
 **Task Table Structure**:
+
 ```sql
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,                    -- Auto-incrementing unique identifier
@@ -324,7 +370,7 @@ CREATE TABLE tasks (
     status VARCHAR(50) NOT NULL DEFAULT 'pending',  -- Task status with default
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- Business rule enforcement at database level
     CONSTRAINT valid_status CHECK (status IN ('pending', 'in_progress', 'completed', 'closed'))
 );
@@ -335,12 +381,11 @@ CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);  -- Fast sorting by
 ```
 
 **Design Decisions**:
+
 - **Database Constraints**: Enforce valid status values at DB level (defense in depth)
 - **Timestamps**: Automatic audit trail for created/updated tracking
 - **Indexes**: Optimized for common query patterns (status filtering, date sorting)
 - **Text vs VARCHAR**: TEXT for descriptions (unlimited), VARCHAR for constrained fields
-
-
 
 ## Inter-Service Communication Strategy
 
@@ -360,7 +405,7 @@ type UserService interface {
 // 1. REST Communication
 userService := rest.NewUserServiceClient("http://user-service:8080")
 
-// 2. gRPC Communication  
+// 2. gRPC Communication
 userService := grpc.NewUserServiceClient(grpcConn)
 
 // 3. Message Queue Communication
@@ -369,13 +414,14 @@ userService := queue.NewUserServiceClient(rabbitMQConn)
 
 **Communication Method Comparison**:
 
-| Method | Pros | Cons | Use Case |
-|--------|------|------|----------|
-| **REST** | Simple, HTTP-based, wide adoption | Higher latency, verbose JSON | CRUD operations, external APIs |
-| **gRPC** | Fast, type-safe, bi-directional streaming | Learning curve, HTTP/2 required | Internal service communication |
-| **Message Queues** | Async, decoupled, fault-tolerant | Complexity, eventual consistency | Event-driven, high-volume processing |
+| Method             | Pros                                      | Cons                             | Use Case                             |
+| ------------------ | ----------------------------------------- | -------------------------------- | ------------------------------------ |
+| **REST**           | Simple, HTTP-based, wide adoption         | Higher latency, verbose JSON     | CRUD operations, external APIs       |
+| **gRPC**           | Fast, type-safe, bi-directional streaming | Learning curve, HTTP/2 required  | Internal service communication       |
+| **Message Queues** | Async, decoupled, fault-tolerant          | Complexity, eventual consistency | Event-driven, high-volume processing |
 
 **Implementation in Task Service**:
+
 ```go
 // Task service calling User service
 func (s *TaskService) AssignTask(taskID, userID int) error {
@@ -384,13 +430,14 @@ func (s *TaskService) AssignTask(taskID, userID int) error {
     if !valid {
         return errors.New("invalid user")
     }
-    
+
     // Update task assignment
     return s.taskRepo.AssignTask(taskID, userID)
 }
 ```
 
 **Benefits of Interface Approach**:
+
 - **Swap communication protocols** without changing business logic
 - **Mock external services** for testing
 - **Gradual migration** from REST to gRPC as services mature
@@ -409,6 +456,7 @@ make test-load
 ### Architecture Components
 
 **Nginx Load Balancer**:
+
 ```nginx
 # Dynamic service discovery using Docker DNS
 resolver 127.0.0.11 valid=10s;
@@ -416,34 +464,39 @@ set $upstream app:8080;  # Docker service name
 proxy_pass http://$upstream;
 ```
 
-**Benefits**: 
+**Benefits**:
+
 - **Stateless Services**: Each app instance is identical and independent
-- **Dynamic Scaling**: Add/remove instances without configuration changes  
+- **Dynamic Scaling**: Add/remove instances without configuration changes
 - **Fault Tolerance**: Failed instances automatically removed from load balancing
 
 ### Production-Grade Improvements
 
 **Container Orchestration**:
+
 - **Kubernetes/Docker Swarm**: Advanced container management and auto-scaling
 - **Service Discovery**: Automatic load balancer configuration as services scale
 
 **Load Balancing Optimization**:
+
 - **Algorithm Selection**: Round Robin, Least Connections, or IP Hash depending on requirements
 - **Multiple Load Balancers**: Scale load balancers themselves for high availability (HA Proxy = High Availability Proxy)
 
 **Database Scaling**:
+
 - **Read Replicas**: Distribute read operations across multiple database instances
 - **Write Replicas**: Master-slave configuration with consistency requirements consideration
 - **Connection Pooling**: Optimize database connection management per service instance
 
 **Advanced Resilience**:
+
 - **Health Checks**: Automatic removal of unhealthy instances
 - **Circuit Breakers**: Prevent cascade failures across services
-
 
 ## Testing Architecture
 
 **Layer-Specific Testing Strategy**:
+
 ```go
 // Unit Tests (Service Layer) - Fast, isolated business logic testing
 func TestTaskService_CreateTask(t *testing.T) {
@@ -470,17 +523,19 @@ func TestCreateTask_Success(t *testing.T) {
 ```
 
 **Test Isolation Benefits**:
-- **Service Tests**: Business logic validation without database overhead 
+
+- **Service Tests**: Business logic validation without database overhead
 - **Repository Tests**: SQL query validation with real PostgreSQL and ephemeral test database
-- **Handler Tests**: HTTP protocol validation without business complexity 
+- **Handler Tests**: HTTP protocol validation without business complexity
 - **Load Tests**: Multi-instance distribution verification via `make test-load`
 
 **Testing Commands & Coverage**:
+
 ```bash
 # Fast tests (no database)
 make test-unit        # Service + Handler tests (~10 seconds)
 
-# Integration tests (with database)  
+# Integration tests (with database)
 make test-repository  # Real PostgreSQL operations (~45 seconds)
 
 # Complete test suite
@@ -495,6 +550,7 @@ make test-load        # Verify request distribution across instances
 ## Assignment Scope Limitations
 
 **Intentionally not implemented for assignment focus**:
+
 - **Database Migrations**: Using single migration file executed at container startup via Docker's initdb.d; production would need versioned migration tools like golang-migrate for schema evolution
 - **Logging**: No structured logging middleware or in-code logging implemented
 - **Advanced Load Balancing**: Currently using Docker's internal DNS with 0-second cache for demonstration; production needs Kubernetes/Docker Swarm
@@ -505,11 +561,10 @@ make test-load        # Verify request distribution across instances
 ## Summary
 
 This Task Management API demonstrates microservices architecture principles through:
+
 - Clean separation of concerns enabling independent scaling
-- Interface-based design supporting multiple communication protocols  
+- Interface-based design supporting multiple communication protocols
 - Comprehensive testing strategy across all architectural layers
 - Production-ready containerization with horizontal scaling capabilities
 
 The implementation exceeds assignment requirements by providing a foundation for microservices evolution while maintaining simplicity and clarity.
-
-

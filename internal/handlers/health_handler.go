@@ -27,7 +27,7 @@ func HealthCheck(c *gin.Context) {
 		db.Close()
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"status":   "healthy",
 		"service":  "task-management-api",
 		"instance": hostname,
