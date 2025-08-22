@@ -1,4 +1,10 @@
-# Task Management API - Assignment Submission
+# Task Management API
+
+## Background
+- Built while learning Go from scratch over a 3-day period for a technical interview assignment
+- Focused on implementing production-ready patterns and clean architecture principles
+- Demonstrates software engineering fundamentals that transcend specific technologies
+
 
 ## Assignment Context
 
